@@ -1,3 +1,8 @@
+import { ComunitatAutònoma, getDadesComunitatAutònoma, Dependent, GrauDiscapacitat, DadesComunitatAutònoma } from "./Dades";
+
+export { ComunitatAutònoma, GrauDiscapacitat } from "./Dades";
+export type { Dependent } from "./Dades";
+
 export enum CategoriaProfessional {
     EnginyersILlicenciats,
     EnginyersTecnicsPèritsIAjudantsTitulats,
@@ -12,31 +17,15 @@ export enum CategoriaProfessional {
     TreballadorsMenors18Anys,
 }
 
-export enum ComunitatAutònoma {
-    Espanya,
-    Andalusia,
-    Aragó,
-    Astúries,
-    Balears,
-    Canaries,
-    Cantàbria,
-    CastellaILleó,
-    CastellaLaManxa,
-    Catalunya,
-    PaísValencià,
-    Extremadura,
-    Galícia,
-    LaRioja,
-    Madrid,
-    Múrcia,
-}
-
 export interface IrpfParameters {
     salariBrut: number;
-    edat: number;
     categoriaProfessional: CategoriaProfessional;
     comunitatAutònoma: ComunitatAutònoma;
     movilitatGeogràfica: boolean;
+    contribuent: Dependent;
+    descendentsExclusiva: boolean;
+    descendents: Dependent[];
+    ascendents: Dependent[];
 }
 
 interface IrpfResult {
@@ -78,18 +67,82 @@ const PercentatgeCotitzacióFormació = 0.001;
 const PercentatgeCotitzacióAtur = 0.0155;
 const PercentatgeCotitzacióSS = PercentatgeCotitzacióContingènciesComunes + PercentatgeCotitzacióFormació + PercentatgeCotitzacióAtur;
 
+function getReduccióRendimentTreball(RendimentBrut: number): number {
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2019/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_6-reduccion-obtencion-rendimientos-trabajo.html
+    if (RendimentBrut <= 13115) {
+        return 5565;
+    } else if (RendimentBrut < 16825) {
+        return 5565 - (RendimentBrut - 13115) * 1.5;
+    }
+    return 0;
+}
+
+function getReduccióRendimentDiscapacitat(contribuent: Dependent) {
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_5-rendimiento-neto-trabajo-gastos-deducibles.html
+    if (contribuent.assistència) {
+        return 7750;
+    }
+    
+    switch (contribuent.discapacitat) {
+        case GrauDiscapacitat.CapOMenor33:
+            return 0;
+        case GrauDiscapacitat.De33A65:
+            return 3500;
+        case GrauDiscapacitat.Major65:
+            return 7750;
+    }
+}
+
+function getMínimPersonal(
+    dades: DadesComunitatAutònoma,
+    contribuent: Dependent,
+    descendentsExclusiva: boolean,
+    descendents: Dependent[],
+    ascendents: Dependent[]
+) {
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/8-cumplimentacion-irpf/8_3-adecuacion-impuesto-circunstancias-personales-familiares/8_3_5-minimo-discapacidad.html
+    const suma = (total: number, valor: number) => { return total + valor; };
+
+    const sumaDiscapacitat = (dependents: Dependent[]) => {
+        return dependents.map((value: Dependent, index: number, array: Dependent[]) => { return dades.getMínimDiscapacitat(value); }).reduce(suma);
+    }
+
+    const mínimPersonal = contribuent.edat >= 75 ? 8100 : (contribuent.edat >= 65 ? 6700 : 5550);
+    const mínimDiscapacitat = dades.getMínimDiscapacitat(contribuent) + sumaDiscapacitat(descendents) + sumaDiscapacitat(ascendents);
+    const mínimDescendents = descendents.map((descendent, index) => dades.getMínimDescendent(descendentsExclusiva, descendent.edat, index)).reduce(suma);
+    const mínimAscendents = ascendents.map((ascendent) => dades.getMínimAscendent(ascendent.edat)).reduce(suma);
+
+    return mínimPersonal + mínimDiscapacitat + mínimDescendents + mínimAscendents;
+}
+
 export function calculateIrpf({
     salariBrut,
-    edat,
     categoriaProfessional,
     comunitatAutònoma,
     movilitatGeogràfica,
+    contribuent,
+    descendentsExclusiva,
+    descendents,
+    ascendents,
 }: IrpfParameters): IrpfResult {
+    const dades = getDadesComunitatAutònoma(comunitatAutònoma);
+
     const salariBrutMensual = salariBrut / 12;
 
+    // Seguretat Social
     const [minCotitzacióSS, maxCotitzacióSS] = límitsCotitzacióPerCategoriaProfessional(categoriaProfessional);
     const CotitzacióSSMensual = Math.min(Math.max(salariBrutMensual, minCotitzacióSS), maxCotitzacióSS) * PercentatgeCotitzacióSS;
     const CotitzacióSSAnual = CotitzacióSSMensual * 12;
+    const RendimentBrut = salariBrut - CotitzacióSSAnual;
+
+    // Reducció del rendiment
+    const ReduccióRendimentMovilitatGeogràfica = movilitatGeogràfica ? 2000 : 0;
+    const ReduccióRendiment = 2000
+        + getReduccióRendimentTreball(RendimentBrut)
+        + ReduccióRendimentMovilitatGeogràfica
+        + getReduccióRendimentDiscapacitat(contribuent);
+    const BaseImposable = Math.max(RendimentBrut - ReduccióRendiment, 0);
+    const MínimPersonal = getMínimPersonal(dades, contribuent, descendentsExclusiva, descendents, ascendents);
 
     return { valid: true, quotaSS: CotitzacióSSAnual, tipusRetenció: 0.0, salariNet: 0.0 };
 }

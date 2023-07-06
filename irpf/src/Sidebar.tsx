@@ -1,7 +1,6 @@
-import { IrpfParameters, CategoriaProfessional, ComunitatAutònoma } from './Irpf';
+import { IrpfParameters, CategoriaProfessional, ComunitatAutònoma, GrauDiscapacitat, Dependent } from './Irpf';
 
 import React from 'react';
-import { useEffect } from 'react';
 
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
@@ -122,12 +121,25 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
             return;
         }
 
+        // TODO:
+        const contribuent: Dependent = {
+            edat: 30,
+            discapacitat: GrauDiscapacitat.CapOMenor33,
+            assistència: false,
+        };
+        const descendentsExclusiva: boolean = false;
+        const descendents: Dependent[] = [];
+        const ascendents: Dependent[] = [];
+
         const params: IrpfParameters = {
             salariBrut,
-            edat,
             categoriaProfessional,
             comunitatAutònoma,
             movilitatGeogràfica,
+            contribuent,
+            descendentsExclusiva,
+            descendents,
+            ascendents,
         };
 
         if (this.props.onInput) {
