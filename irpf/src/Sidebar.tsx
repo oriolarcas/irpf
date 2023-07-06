@@ -47,12 +47,12 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         ['7', ComunitatAutònoma.CastellaILleó],
         ['8', ComunitatAutònoma.CastellaLaManxa],
         ['9', ComunitatAutònoma.Catalunya],
-        ['10', ComunitatAutònoma.PaísValencià],
-        ['11', ComunitatAutònoma.Extremadura],
-        ['12', ComunitatAutònoma.Galícia],
-        ['13', ComunitatAutònoma.LaRioja],
-        ['14', ComunitatAutònoma.Madrid],
-        ['15', ComunitatAutònoma.Múrcia],
+        ['10', ComunitatAutònoma.Extremadura],
+        ['11', ComunitatAutònoma.Galícia],
+        ['12', ComunitatAutònoma.LaRioja],
+        ['13', ComunitatAutònoma.Madrid],
+        ['14', ComunitatAutònoma.Múrcia],
+        ['15', ComunitatAutònoma.PaísValencià],
     ]);
 
     constructor(props: any) {
@@ -213,12 +213,12 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <option value='7'>Castella i Lleó</option>
                                 <option value='8'>Castella - la Manxa</option>
                                 <option value='9'>Catalunya</option>
-                                <option value='10'>Comunitat Valenciana</option>
-                                <option value='11'>Extremadura</option>
-                                <option value='12'>Galícia</option>
-                                <option value='13'>La Rioja</option>
-                                <option value='14'>Madrid</option>
-                                <option value='15'>Múrcia</option>
+                                <option value='10'>Extremadura</option>
+                                <option value='11'>Galícia</option>
+                                <option value='12'>La Rioja</option>
+                                <option value='13'>Madrid</option>
+                                <option value='14'>Múrcia</option>
+                                <option value='15'>País Valencià</option>
                             </Form.Select>
                             <Form.Check type='checkbox' id={IrpfFormFields.MovilitatGeogràfica} label='Movilitat geogràfica' className='mt-2' onChange={this.onChange} />
                         </li>

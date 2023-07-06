@@ -9,12 +9,12 @@ export enum ComunitatAutònoma {
     CastellaILleó,
     CastellaLaManxa,
     Catalunya,
-    PaísValencià,
     Extremadura,
     Galícia,
     LaRioja,
     Madrid,
     Múrcia,
+    PaísValencià,
 }
 
 export enum GrauDiscapacitat {
@@ -116,10 +116,6 @@ class DadesCatalunya extends DadesEspanya {
 
 }
 
-class DadesPaísValencià extends DadesEspanya {
-
-}
-
 class DadesExtremadura extends DadesEspanya {
 
 }
@@ -137,6 +133,10 @@ class DadesMadrid extends DadesEspanya {
 }
 
 class DadesMúrcia extends DadesEspanya {
+
+}
+
+class DadesPaísValencià extends DadesEspanya {
 
 }
 
@@ -162,8 +162,6 @@ export function getDadesComunitatAutònoma(comunitatAutònoma: ComunitatAutònom
             return new DadesCastellaLaManxa();
         case ComunitatAutònoma.Catalunya:
             return new DadesCatalunya();
-        case ComunitatAutònoma.PaísValencià:
-            return new DadesPaísValencià();
         case ComunitatAutònoma.Extremadura:
             return new DadesExtremadura();
         case ComunitatAutònoma.Galícia:
@@ -174,5 +172,7 @@ export function getDadesComunitatAutònoma(comunitatAutònoma: ComunitatAutònom
             return new DadesMadrid();
         case ComunitatAutònoma.Múrcia:
             return new DadesMúrcia();
+        case ComunitatAutònoma.PaísValencià:
+            return new DadesPaísValencià();
     }
 }
