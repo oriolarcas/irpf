@@ -37,8 +37,18 @@ export interface DadesComunitatAutònoma {
 }
 
 class DadesEspanya implements DadesComunitatAutònoma {
+    
+    // Protected methods overriden by the subclasses
+
+    protected getDadesMínimContribuent(): {base: number, major65: number, major75: number} {
+        return {base: 5550, major65: 6700, major75: 8100};
+    }
+
+    // Public methods
+
     getMínimContribuent(edat: number): number {
-        return edat >= 75 ? 8100 : (edat >= 65 ? 6700 : 5550);
+        const dadesMínimContribuent = this.getDadesMínimContribuent();
+        return edat >= 75 ? dadesMínimContribuent.base : (edat >= 65 ? dadesMínimContribuent.major65 : dadesMínimContribuent.major75);
     }
 
     getMínimDescendent(exclusiva: boolean, edat: number, index: number): number {
@@ -81,7 +91,9 @@ class DadesEspanya implements DadesComunitatAutònoma {
 }
 
 class DadesAndalusia extends DadesEspanya {
-
+    protected getDadesMínimContribuent() {
+        return {base: 5790, major65: 6990, major75: 8450};
+    }
 }
 
 class DadesAragó extends DadesEspanya {
@@ -93,7 +105,9 @@ class DadesAstúries extends DadesEspanya {
 }
 
 class DadesBalears extends DadesEspanya {
-
+    protected getDadesMínimContribuent() {
+        return {base: super.getDadesMínimContribuent().base, major65: 7370, major75: 8450};
+    }
 }
 
 class DadesCanaries extends DadesEspanya {
@@ -121,7 +135,9 @@ class DadesExtremadura extends DadesEspanya {
 }
 
 class DadesGalícia extends DadesEspanya {
-
+    protected getDadesMínimContribuent() {
+        return {base: 5789, major65: 6988, major75: 8448};
+    }
 }
 
 class DadesLaRioja extends DadesEspanya {
@@ -129,7 +145,9 @@ class DadesLaRioja extends DadesEspanya {
 }
 
 class DadesMadrid extends DadesEspanya {
-
+    protected getDadesMínimContribuent() {
+        return {base: 5777.55, major65: 6974.70, major75: 8432.10};
+    }
 }
 
 class DadesMúrcia extends DadesEspanya {
@@ -137,7 +155,9 @@ class DadesMúrcia extends DadesEspanya {
 }
 
 class DadesPaísValencià extends DadesEspanya {
-
+    protected getDadesMínimContribuent() {
+        return {base: 6105, major65: 7370, major75: 8910};
+    }
 }
 
 export function getDadesComunitatAutònoma(comunitatAutònoma: ComunitatAutònoma): DadesComunitatAutònoma {
