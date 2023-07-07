@@ -68,7 +68,7 @@ const PercentatgeCotitzacióAtur = 0.0155;
 const PercentatgeCotitzacióSS = PercentatgeCotitzacióContingènciesComunes + PercentatgeCotitzacióFormació + PercentatgeCotitzacióAtur;
 
 function getReduccióRendimentTreball(RendimentBrut: number): number {
-    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2019/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_6-reduccion-obtencion-rendimientos-trabajo.html
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_6-reduccion-obtencion-rendimientos-trabajo.html
     if (RendimentBrut <= 13115) {
         return 5565;
     } else if (RendimentBrut < 16825) {
@@ -84,7 +84,8 @@ function getReduccióRendimentDiscapacitat(contribuent: Dependent) {
     }
     
     switch (contribuent.discapacitat) {
-        case GrauDiscapacitat.CapOMenor33:
+        case GrauDiscapacitat.Cap:
+        case GrauDiscapacitat.Menor33:
             return 0;
         case GrauDiscapacitat.De33A65:
             return 3500;
@@ -99,7 +100,7 @@ function getMínimPersonal(
     descendentsExclusiva: boolean,
     descendents: Dependent[],
     ascendents: Dependent[]
-) {
+): number {
     // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/8-cumplimentacion-irpf/8_3-adecuacion-impuesto-circunstancias-personales-familiares/8_3_5-minimo-discapacidad.html
     const suma = (total: number, valor: number) => { return total + valor; };
 
@@ -107,12 +108,27 @@ function getMínimPersonal(
         return dependents.map((value: Dependent, index: number, array: Dependent[]) => { return dades.getMínimDiscapacitat(value); }).reduce(suma);
     }
 
-    const mínimPersonal = contribuent.edat >= 75 ? 8100 : (contribuent.edat >= 65 ? 6700 : 5550);
+    const mínimPersonal = dades.getMínimContribuent(contribuent.edat);
     const mínimDiscapacitat = dades.getMínimDiscapacitat(contribuent) + sumaDiscapacitat(descendents) + sumaDiscapacitat(ascendents);
-    const mínimDescendents = descendents.map((descendent, index) => dades.getMínimDescendent(descendentsExclusiva, descendent.edat, index)).reduce(suma);
-    const mínimAscendents = ascendents.map((ascendent) => dades.getMínimAscendent(ascendent.edat)).reduce(suma);
+    const mínimDescendents = descendents.map((descendent, index) => dades.getMínimDescendent(descendentsExclusiva, descendent.edat, descendent.discapacitat, index)).reduce(suma);
+    const mínimAscendents = ascendents.map((ascendent) => dades.getMínimAscendent(ascendent.edat, ascendent.discapacitat)).reduce(suma);
 
     return mínimPersonal + mínimDiscapacitat + mínimDescendents + mínimAscendents;
+}
+
+function getDespesesDeduïbles(
+    rendimentDelTreball: number,
+    cotitzacióSSAnual: number,
+    contribuent: Dependent,
+    movilitatGeogràfica: boolean,
+): number {
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_5-rendimiento-neto-trabajo-gastos-deducibles.html
+    const ReduccióRendimentMovilitatGeogràfica = movilitatGeogràfica ? 2000 : 0;
+    return 2000
+        + cotitzacióSSAnual
+        + getReduccióRendimentTreball(rendimentDelTreball)
+        + ReduccióRendimentMovilitatGeogràfica
+        + getReduccióRendimentDiscapacitat(contribuent);
 }
 
 export function calculateIrpf({
@@ -133,16 +149,15 @@ export function calculateIrpf({
     const [minCotitzacióSS, maxCotitzacióSS] = límitsCotitzacióPerCategoriaProfessional(categoriaProfessional);
     const CotitzacióSSMensual = Math.min(Math.max(salariBrutMensual, minCotitzacióSS), maxCotitzacióSS) * PercentatgeCotitzacióSS;
     const CotitzacióSSAnual = CotitzacióSSMensual * 12;
-    const RendimentBrut = salariBrut - CotitzacióSSAnual;
+    const RendimentDelTreball = salariBrut - CotitzacióSSAnual;
 
-    // Reducció del rendiment
-    const ReduccióRendimentMovilitatGeogràfica = movilitatGeogràfica ? 2000 : 0;
-    const ReduccióRendiment = 2000
-        + getReduccióRendimentTreball(RendimentBrut)
-        + ReduccióRendimentMovilitatGeogràfica
-        + getReduccióRendimentDiscapacitat(contribuent);
-    const BaseImposable = Math.max(RendimentBrut - ReduccióRendiment, 0);
+    const DespesesDeduïbles = getDespesesDeduïbles(RendimentDelTreball, CotitzacióSSAnual, contribuent, movilitatGeogràfica);
+    
+    const RendimentNetDelTreball = Math.max(RendimentDelTreball - DespesesDeduïbles, 0);
+    const BaseImposable = RendimentNetDelTreball; // + rendiment net de l'estalvi
     const MínimPersonal = getMínimPersonal(dades, contribuent, descendentsExclusiva, descendents, ascendents);
+
+
 
     return { valid: true, quotaSS: CotitzacióSSAnual, tipusRetenció: 0.0, salariNet: 0.0 };
 }

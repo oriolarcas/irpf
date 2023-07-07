@@ -124,7 +124,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         // TODO:
         const contribuent: Dependent = {
             edat: 30,
-            discapacitat: GrauDiscapacitat.CapOMenor33,
+            discapacitat: GrauDiscapacitat.Cap,
             assistència: false,
         };
         const descendentsExclusiva: boolean = false;
