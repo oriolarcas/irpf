@@ -37,7 +37,6 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
     ]);
 
     SelectToComunitatAutònoma = new Map<string, ComunitatAutònoma>([
-        ['E', ComunitatAutònoma.Espanya],
         ['1', ComunitatAutònoma.Andalusia],
         ['2', ComunitatAutònoma.Aragó],
         ['3', ComunitatAutònoma.Astúries],
@@ -203,7 +202,6 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 Comunitat autònoma
                             </Form.Label>
                             <Form.Select id={IrpfFormFields.ComunitatAutònoma} aria-label="Comunitat Autònoma" onChange={this.onChange}>
-                                <option value='E'>Espanya</option>
                                 <option value='1'>Andalusia</option>
                                 <option value='2'>Aragó</option>
                                 <option value='3'>Astúries</option>
