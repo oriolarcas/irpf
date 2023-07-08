@@ -82,7 +82,7 @@ function getReduccióRendimentDiscapacitat(contribuent: Dependent) {
     if (contribuent.assistència) {
         return 7750;
     }
-    
+
     switch (contribuent.discapacitat) {
         case GrauDiscapacitat.Cap:
         case GrauDiscapacitat.Menor33:
@@ -105,13 +105,13 @@ function getMínimPersonal(
     const suma = (total: number, valor: number) => { return total + valor; };
 
     const sumaDiscapacitat = (dependents: Dependent[]) => {
-        return dependents.map((value: Dependent, index: number, array: Dependent[]) => { return dades.getMínimDiscapacitat(value); }).reduce(suma);
+        return dependents.map((value: Dependent, index: number, array: Dependent[]) => { return dades.getMínimDiscapacitat(value); }).reduce(suma, 0);
     }
 
     const mínimPersonal = dades.getMínimContribuent(contribuent.edat);
     const mínimDiscapacitat = dades.getMínimDiscapacitat(contribuent) + sumaDiscapacitat(descendents) + sumaDiscapacitat(ascendents);
-    const mínimDescendents = descendents.map((descendent, index) => dades.getMínimDescendent(descendentsExclusiva, descendent.edat, descendent.discapacitat, index)).reduce(suma);
-    const mínimAscendents = ascendents.map((ascendent) => dades.getMínimAscendent(ascendent.edat, ascendent.discapacitat)).reduce(suma);
+    const mínimDescendents = descendents.map((descendent, index) => dades.getMínimDescendent(descendentsExclusiva, descendent.edat, descendent.discapacitat, index)).reduce(suma, 0);
+    const mínimAscendents = ascendents.map((ascendent) => dades.getMínimAscendent(ascendent.edat, ascendent.discapacitat)).reduce(suma, 0);
 
     return mínimPersonal + mínimDiscapacitat + mínimDescendents + mínimAscendents;
 }
@@ -131,6 +131,10 @@ function getDespesesDeduïbles(
         + getReduccióRendimentDiscapacitat(contribuent);
 }
 
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(value);
+}
+
 export function calculateIrpf({
     salariBrut,
     categoriaProfessional,
@@ -141,23 +145,50 @@ export function calculateIrpf({
     descendents,
     ascendents,
 }: IrpfParameters): IrpfResult {
-    const dades = getDadesComunitatAutònoma(comunitatAutònoma);
+    const dadesEstatals = getDadesComunitatAutònoma(ComunitatAutònoma.Espanya);
+    const dadesAutonòmiques = getDadesComunitatAutònoma(comunitatAutònoma);
 
+    const RendimentDelTreball = salariBrut; // + altres rendiments del treball personal
     const salariBrutMensual = salariBrut / 12;
 
     // Seguretat Social
     const [minCotitzacióSS, maxCotitzacióSS] = límitsCotitzacióPerCategoriaProfessional(categoriaProfessional);
     const CotitzacióSSMensual = Math.min(Math.max(salariBrutMensual, minCotitzacióSS), maxCotitzacióSS) * PercentatgeCotitzacióSS;
     const CotitzacióSSAnual = CotitzacióSSMensual * 12;
-    const RendimentDelTreball = salariBrut - CotitzacióSSAnual;
 
     const DespesesDeduïbles = getDespesesDeduïbles(RendimentDelTreball, CotitzacióSSAnual, contribuent, movilitatGeogràfica);
-    
+
     const RendimentNetDelTreball = Math.max(RendimentDelTreball - DespesesDeduïbles, 0);
     const BaseImposable = RendimentNetDelTreball; // + rendiment net de l'estalvi
-    const MínimPersonal = getMínimPersonal(dades, contribuent, descendentsExclusiva, descendents, ascendents);
+    const BaseLiquidable = BaseImposable; // - reduccions (declaració conjunta, etc.)
 
+    // Quota íntegra estatal
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/8-cumplimentacion-irpf/8_4-cuota-integra/8_4_3-gravamen-base-liquidable-general/8_4_3_1-cuota-integra-estatal.html
+    const MínimPersonalEstatal = getMínimPersonal(dadesEstatals, contribuent, descendentsExclusiva, descendents, ascendents);
+    const QuotaBaseLiquidableEstatal = dadesEstatals.getGravamen(BaseLiquidable);
+    const QuotaMínimPersonalEstatal = dadesEstatals.getGravamen(MínimPersonalEstatal);
+    const QuotaÍntegraEstatal = Math.max(QuotaBaseLiquidableEstatal - QuotaMínimPersonalEstatal, 0);
+    console.log("Mínim personal estatal: " + formatCurrency(MínimPersonalEstatal));
+    console.log("Quota estatal de la base liquidable: " + formatCurrency(QuotaBaseLiquidableEstatal));
+    console.log("Quota estatal del mínim personal i familiar: " + formatCurrency(QuotaMínimPersonalEstatal));
+    console.log("Quota íntegra estatal: " + formatCurrency(QuotaÍntegraEstatal));
 
+    // Quota íntegra autonòmica
+    // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/8-cumplimentacion-irpf/8_4-cuota-integra/8_4_3-gravamen-base-liquidable-general/8_4_3_2-cuota-integra-autonomica.html
+    const MínimPersonalAutonòmic = getMínimPersonal(dadesAutonòmiques, contribuent, descendentsExclusiva, descendents, ascendents);
+    const QuotaBaseLiquidableAutonòmica = dadesAutonòmiques.getGravamen(BaseLiquidable);
+    const QuotaMínimPersonalAutonòmica = dadesAutonòmiques.getGravamen(MínimPersonalAutonòmic);
+    const QuotaÍntegraAutonòmica = Math.max(QuotaBaseLiquidableAutonòmica - QuotaMínimPersonalAutonòmica, 0);
+    console.log("Mínim personal autonòmic: " + formatCurrency(MínimPersonalAutonòmic));
+    console.log("Quota autonòmica de la base liquidable: " + formatCurrency(QuotaBaseLiquidableAutonòmica));
+    console.log("Quota autonòmica del mínim personal i familiar: " + formatCurrency(QuotaMínimPersonalAutonòmica));
+    console.log("Quota íntegra autonòmica: " + formatCurrency(QuotaÍntegraAutonòmica));
 
-    return { valid: true, quotaSS: CotitzacióSSAnual, tipusRetenció: 0.0, salariNet: 0.0 };
+    const QuotaÍntegra = QuotaÍntegraEstatal + QuotaÍntegraAutonòmica;
+    console.log("Quota íntegra: " + formatCurrency(QuotaÍntegra));
+
+    const TipusRetenció = QuotaÍntegra / salariBrut;
+    const SalariNet = salariBrut - CotitzacióSSAnual - QuotaÍntegra;
+
+    return { valid: true, quotaSS: CotitzacióSSAnual, tipusRetenció: TipusRetenció, salariNet: SalariNet };
 }
