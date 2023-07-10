@@ -28,9 +28,24 @@ export interface IrpfParameters {
     ascendents: Dependent[];
 }
 
-interface IrpfResult {
+type DespesesDeduïbles = {
+    rendimentsDelTreball: number;
+    cotitzacióSS: number;
+    discapacitatContribuent?: number;
+    movilitatGeogràfica?: number;
+};
+
+export interface IrpfResult {
     valid: boolean;
-    quotaSS: number;
+    salariBrut: number;
+    despesesDeduïbles: DespesesDeduïbles,
+    baseImposable: number;
+    baseLiquidable: number;
+    mínimPersonalEstatal: number;
+    mínimPersonalAutonòmic: number;
+    quotaEstatal: number;
+    quotaAutonòmica: number;
+    // Resultat
     tipusRetenció: number;
     salariNet: number;
 }
@@ -121,14 +136,14 @@ function getDespesesDeduïbles(
     cotitzacióSSAnual: number,
     contribuent: Dependent,
     movilitatGeogràfica: boolean,
-): number {
+): DespesesDeduïbles {
     // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/7-cumplimentacion-irpf/7_1-rendimientos-trabajo-personal/7_1_5-rendimiento-neto-trabajo-gastos-deducibles.html
     const ReduccióRendimentMovilitatGeogràfica = movilitatGeogràfica ? 2000 : 0;
-    return 2000
-        + cotitzacióSSAnual
-        + getReduccióRendimentTreball(rendimentDelTreball)
-        + ReduccióRendimentMovilitatGeogràfica
-        + getReduccióRendimentDiscapacitat(contribuent);
+    return {rendimentsDelTreball: 2000 + getReduccióRendimentTreball(rendimentDelTreball),
+        cotitzacióSS: cotitzacióSSAnual,
+        movilitatGeogràfica: ReduccióRendimentMovilitatGeogràfica,
+        discapacitatContribuent: getReduccióRendimentDiscapacitat(contribuent),
+    };
 }
 
 function formatCurrency(value: number) {
@@ -157,8 +172,9 @@ export function calculateIrpf({
     const CotitzacióSSAnual = CotitzacióSSMensual * 12;
 
     const DespesesDeduïbles = getDespesesDeduïbles(RendimentDelTreball, CotitzacióSSAnual, contribuent, movilitatGeogràfica);
+    const SumaDespesesDeduïbles = Object.values(DespesesDeduïbles).reduce((accumulator, value) => accumulator + value);
 
-    const RendimentNetDelTreball = Math.max(RendimentDelTreball - DespesesDeduïbles, 0);
+    const RendimentNetDelTreball = Math.max(RendimentDelTreball - SumaDespesesDeduïbles, 0);
     const BaseImposable = RendimentNetDelTreball; // + rendiment net de l'estalvi
     const BaseLiquidable = BaseImposable; // - reduccions (declaració conjunta, etc.)
 
@@ -188,7 +204,19 @@ export function calculateIrpf({
     console.log("Quota íntegra: " + formatCurrency(QuotaÍntegra));
 
     const TipusRetenció = QuotaÍntegra / salariBrut;
-    const SalariNet = salariBrut - CotitzacióSSAnual - QuotaÍntegra;
+    const SalariNet = RendimentNetDelTreball - QuotaÍntegra;
 
-    return { valid: true, quotaSS: CotitzacióSSAnual, tipusRetenció: TipusRetenció, salariNet: SalariNet };
+    return {
+        valid: true,
+        salariBrut: salariBrut,
+        despesesDeduïbles: DespesesDeduïbles,
+        baseImposable: BaseImposable,
+        baseLiquidable: BaseLiquidable,
+        mínimPersonalEstatal: QuotaMínimPersonalEstatal,
+        mínimPersonalAutonòmic: QuotaMínimPersonalAutonòmica,
+        quotaEstatal: QuotaBaseLiquidableEstatal,
+        quotaAutonòmica: QuotaBaseLiquidableAutonòmica,
+        tipusRetenció: TipusRetenció,
+        salariNet: SalariNet
+    };
 }

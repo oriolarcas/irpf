@@ -69,20 +69,30 @@ const SankeyLabel = ({name, x0, x1, y0, y1}: SankeyLabelProps): JSX.Element => {
     );
 }
 
+export type SankeyData = {
+    nodes: {name: string;}[];
+    links: {
+        source: number;
+        target: number;
+        value: number;
+    }[];
+}
+
 interface SankeyProps {
-    data: any;
+    data: SankeyData;
     width: number;
     height: number;
 }
 
-class Sankey extends React.Component<SankeyProps> {
+export class Sankey extends React.Component<SankeyProps> {
     svgRef = React.createRef<SVGSVGElement>();
 
     render() {
+        const dataObj: any = this.props.data;
         const { nodes, links } = sankey()
             .nodeWidth(15)
             .nodePadding(10)
-            .extent([[1, 1], [this.props.width - 1, this.props.height - 5]])(this.props.data);
+            .extent([[1, 1], [this.props.width - 1, this.props.height - 5]])(dataObj);
         const color = chroma.scale("Set3").classes(nodes.length);
         const colorScale = d3
             .scaleLinear()
@@ -127,5 +137,3 @@ class Sankey extends React.Component<SankeyProps> {
         );
     }
 }
-
-export default Sankey;

@@ -1,5 +1,5 @@
 import Sidebar from './Sidebar'
-import Sankey from './Sankey';
+import { Sankey, SankeyData } from './Sankey';
 import { IrpfParameters, calculateIrpf } from './Irpf';
 
 import React from 'react';
@@ -8,337 +8,232 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
+enum IrpfNodes {
+    RendimentsDelTreball,
+    DeduccióRendimentsTreball,
+    DeduccióCotitzacióSS,
+    DeduccióMovilitatGeogràfica,
+    DeduccióDiscapacitatContribuent,
+    DespesesDeduïbles,
+    BaseImposable,
+    BaseLiquidable,
+    QuotaEstatal,
+    QuotaEstatalMínimPersonal,
+    QuotaAutonòmica,
+    QuotaAutonòmicaMínimPersonal,
+    Retencions,
+    SalariNet,
+}
+
+function getIrpfNodeName(node: IrpfNodes): string {
+    switch (node) {
+        case IrpfNodes.RendimentsDelTreball:
+            return "Rendiments del treball";
+        case IrpfNodes.DeduccióRendimentsTreball:
+            return "Rendiments del treball";
+        case IrpfNodes.DeduccióCotitzacióSS:
+            return "Cotització a la Seguretat Social";
+        case IrpfNodes.DeduccióMovilitatGeogràfica:
+            return "Movilitat geogràfica";
+        case IrpfNodes.DeduccióDiscapacitatContribuent:
+            return "Discapacitat";
+        case IrpfNodes.DespesesDeduïbles:
+            return "Despeses deduïbles";
+        case IrpfNodes.BaseImposable:
+            return "Base imposable";
+        case IrpfNodes.BaseLiquidable:
+            return "Base liquidable";
+        case IrpfNodes.QuotaEstatal:
+            return "Quota estatal";
+        case IrpfNodes.QuotaEstatalMínimPersonal:
+            return "Quota estatal del mínim personal";
+        case IrpfNodes.QuotaAutonòmica:
+            return "Quota autonòmica";
+        case IrpfNodes.QuotaAutonòmicaMínimPersonal:
+            return "Quota autonòmica del mínim personal";
+        case IrpfNodes.Retencions:
+            return "Retencions";
+        case IrpfNodes.SalariNet:
+            return "Salari net";
+    }
+}
+
 class App extends React.Component {
-  inputEvent = (params: IrpfParameters) => {
-    console.log(params);
+    state: { data: SankeyData } = {
+        data: {
+        nodes: [],
+        links: [],
+    }};
 
-    const irpf = calculateIrpf(params);
-    console.log(irpf);
-  };
+    inputEvent = (params: IrpfParameters) => {
+        console.log(params);
 
-  render() {
-    const data = {
-      "nodes": [
-        {
-          "name": "Universidad de Granada"
-        },
-        {
-          "name": "De Comunidades Autónomas"
-        },
-        {
-          "name": "Precios públicos"
-        },
-        {
-          "name": "De la Administración General del Estado"
-        },
-        {
-          "name": "Ingresos por prestación de servicios"
-        },
-        {
-          "name": "Del exterior"
-        },
-        {
-          "name": "De la Seguridad Social"
-        },
-        {
-          "name": "Tasas"
-        },
-        {
-          "name": "De empresas privadas"
-        },
-        {
-          "name": "De Organismos Autónomos Administrativos"
-        },
-        {
-          "name": "Reintegro de préstamos concedidos"
-        },
-        {
-          "name": "Rentas de bienes inmuebles"
-        },
-        {
-          "name": "Intereses de depósitos"
-        },
-        {
-          "name": "Otros ingresos patrimoniales"
-        },
-        {
-          "name": "De empresas públicas y otros entes públicos"
-        },
-        {
-          "name": "Venta de bienes"
-        },
-        {
-          "name": "De familias e instituciones sin fines de lucro"
-        },
-        {
-          "name": "De Corporaciones Locales"
-        },
-        {
-          "name": "Otros Ingresos"
-        },
-        {
-          "name": "Enseñanzas Universitarias"
-        },
-        {
-          "name": "Estructura y Gestión Universitaria"
-        },
-        {
-          "name": "Investigación Científica"
-        },
-        {
-          "name": "Gastos De Personal"
-        },
-        {
-          "name": "Inversiones Reales"
-        },
-        {
-          "name": "Gastos En Bienes Corrientes Y Servicios"
-        },
-        {
-          "name": "Transferencias Corrientes"
-        },
-        {
-          "name": "Activos Financieros"
-        },
-        {
-          "name": "Pasivos Financieros"
-        },
-        {
-          "name": "Transferencias De Capital"
-        },
-        {
-          "name": "Gastos Financieros"
+        const irpf = calculateIrpf(params);
+        console.log(irpf);
+
+        let links = new Array<{source: IrpfNodes, target: IrpfNodes, value: number}>();
+
+        links.push({
+            source: IrpfNodes.RendimentsDelTreball,
+            target: IrpfNodes.BaseImposable,
+            value: irpf.baseImposable,
+        });
+
+        links.push({
+            source: IrpfNodes.RendimentsDelTreball,
+            target: IrpfNodes.DeduccióRendimentsTreball,
+            value: irpf.despesesDeduïbles.rendimentsDelTreball,
+        });
+
+        links.push({
+            source: IrpfNodes.DeduccióRendimentsTreball,
+            target: IrpfNodes.DespesesDeduïbles,
+            value: irpf.despesesDeduïbles.rendimentsDelTreball,
+        });
+
+        links.push({
+            source: IrpfNodes.RendimentsDelTreball,
+            target: IrpfNodes.DeduccióCotitzacióSS,
+            value: irpf.despesesDeduïbles.cotitzacióSS,
+        });
+
+        links.push({
+            source: IrpfNodes.DeduccióCotitzacióSS,
+            target: IrpfNodes.DespesesDeduïbles,
+            value: irpf.despesesDeduïbles.cotitzacióSS,
+        });
+
+        if (irpf.despesesDeduïbles.movilitatGeogràfica) {
+            links.push({
+                source: IrpfNodes.RendimentsDelTreball,
+                target: IrpfNodes.DeduccióMovilitatGeogràfica,
+                value: irpf.despesesDeduïbles.movilitatGeogràfica,
+            });
+
+            links.push({
+                source: IrpfNodes.DeduccióMovilitatGeogràfica,
+                target: IrpfNodes.DespesesDeduïbles,
+                value: irpf.despesesDeduïbles.movilitatGeogràfica,
+            });
         }
-      ],
-      "links": [
-        {
-          "source": 19,
-          "target": 26,
-          "value": 1150000
-        },
-        {
-          "source": 0,
-          "target": 19,
-          "value": 283175993
-        },
-        {
-          "source": 0,
-          "target": 20,
-          "value": 64294001
-        },
-        {
-          "source": 19,
-          "target": 22,
-          "value": 252728897
-        },
-        {
-          "source": 20,
-          "target": 22,
-          "value": 54659
-        },
-        {
-          "source": 21,
-          "target": 24,
-          "value": 805940
-        },
-        {
-          "source": 19,
-          "target": 24,
-          "value": 11754596
-        },
-        {
-          "source": 20,
-          "target": 24,
-          "value": 25439249
-        },
-        {
-          "source": 20,
-          "target": 29,
-          "value": 2e5
-        },
-        {
-          "source": 21,
-          "target": 23,
-          "value": 47161673
-        },
-        {
-          "source": 20,
-          "target": 23,
-          "value": 36754122
-        },
-        {
-          "source": 19,
-          "target": 23,
-          "value": 2485000
-        },
-        {
-          "source": 0,
-          "target": 21,
-          "value": 47967613
-        },
-        {
-          "source": 20,
-          "target": 27,
-          "value": 1127217
-        },
-        {
-          "source": 19,
-          "target": 25,
-          "value": 14807500
-        },
-        {
-          "source": 20,
-          "target": 25,
-          "value": 581754
-        },
-        {
-          "source": 20,
-          "target": 28,
-          "value": 137000
-        },
-        {
-          "source": 19,
-          "target": 28,
-          "value": 250000
-        },
-        {
-          "source": 1,
-          "target": 0,
-          "value": 259498608
-        },
-        {
-          "source": 1,
-          "target": 0,
-          "value": 30465000
-        },
-        {
-          "source": 17,
-          "target": 0,
-          "value": 90000
-        },
-        {
-          "source": 17,
-          "target": 0,
-          "value": 30000
-        },
-        {
-          "source": 8,
-          "target": 0,
-          "value": 1400000
-        },
-        {
-          "source": 8,
-          "target": 0,
-          "value": 1275000
-        },
-        {
-          "source": 14,
-          "target": 0,
-          "value": 4e5
-        },
-        {
-          "source": 16,
-          "target": 0,
-          "value": 2e5
-        },
-        {
-          "source": 3,
-          "target": 0,
-          "value": 22245000
-        },
-        {
-          "source": 3,
-          "target": 0,
-          "value": 10600000
-        },
-        {
-          "source": 6,
-          "target": 0,
-          "value": 3e6
-        },
-        {
-          "source": 5,
-          "target": 0,
-          "value": 4e6
-        },
-        {
-          "source": 5,
-          "target": 0,
-          "value": 3500000
-        },
-        {
-          "source": 9,
-          "target": 0,
-          "value": 693000
-        },
-        {
-          "source": 9,
-          "target": 0,
-          "value": 70000
-        },
-        {
-          "source": 4,
-          "target": 0,
-          "value": 8850000
-        },
-        {
-          "source": 12,
-          "target": 0,
-          "value": 5e5
-        },
-        {
-          "source": 2,
-          "target": 0,
-          "value": 44740000
-        },
-        {
-          "source": 10,
-          "target": 0,
-          "value": 650000
-        },
-        {
-          "source": 18,
-          "target": 0,
-          "value": 75000
-        },
-        {
-          "source": 13,
-          "target": 0,
-          "value": 406000
-        },
-        {
-          "source": 11,
-          "target": 0,
-          "value": 6e5
-        },
-        {
-          "source": 7,
-          "target": 0,
-          "value": 1900000
-        },
-        {
-          "source": 15,
-          "target": 0,
-          "value": 250000
+
+        if (irpf.despesesDeduïbles.discapacitatContribuent) {
+            links.push({
+                source: IrpfNodes.RendimentsDelTreball,
+                target: IrpfNodes.DeduccióDiscapacitatContribuent,
+                value: irpf.despesesDeduïbles.discapacitatContribuent,
+            });
+
+            links.push({
+                source: IrpfNodes.DeduccióDiscapacitatContribuent,
+                target: IrpfNodes.DespesesDeduïbles,
+                value: irpf.despesesDeduïbles.discapacitatContribuent,
+            });
         }
-      ]
+
+        links.push({
+            source: IrpfNodes.BaseImposable,
+            target: IrpfNodes.BaseLiquidable,
+            value: irpf.baseLiquidable,
+        });
+
+        const QuotaEstatalÍntegra = irpf.quotaEstatal - irpf.mínimPersonalEstatal;
+        const QuotaAutonòmicaÍntegra = irpf.quotaAutonòmica - irpf.mínimPersonalAutonòmic;
+
+        links.push({
+            source: IrpfNodes.BaseLiquidable,
+            target: IrpfNodes.QuotaEstatal,
+            value: QuotaEstatalÍntegra,
+        });
+
+        links.push({
+            source: IrpfNodes.BaseLiquidable,
+            target: IrpfNodes.QuotaAutonòmica,
+            value: QuotaAutonòmicaÍntegra,
+        });
+
+        links.push({
+            source: IrpfNodes.QuotaEstatal,
+            target: IrpfNodes.Retencions,
+            value: QuotaEstatalÍntegra,
+        });
+
+        links.push({
+            source: IrpfNodes.QuotaAutonòmica,
+            target: IrpfNodes.Retencions,
+            value: QuotaAutonòmicaÍntegra,
+        });
+
+        links.push({
+            source: IrpfNodes.QuotaEstatal,
+            target: IrpfNodes.QuotaEstatalMínimPersonal,
+            value: irpf.mínimPersonalEstatal,
+        });
+
+        links.push({
+            source: IrpfNodes.QuotaAutonòmica,
+            target: IrpfNodes.QuotaAutonòmicaMínimPersonal,
+            value: irpf.mínimPersonalAutonòmic,
+        });
+
+        links.push({
+            source: IrpfNodes.BaseLiquidable,
+            target: IrpfNodes.SalariNet,
+            value: irpf.salariNet,
+        });
+
+        // Generate final data object
+
+        let nodeSet = new Set<IrpfNodes>();
+
+        for (const link of links) {
+            nodeSet.add(link.source);
+            nodeSet.add(link.target);
+        }
+
+        const nodeList = Array.from(nodeSet);
+        let nodeMap = new Map<IrpfNodes, number>();
+
+        nodeList.forEach((node, index) => {
+            nodeMap.set(node, index);
+        });
+
+        let data: SankeyData = {
+            nodes: nodeList.map((node) => ({
+                name: getIrpfNodeName(node)
+            })),
+            links: links.map((link) => ({
+                source: nodeMap.get(link.source) ?? 0,
+                target: nodeMap.get(link.target) ?? 0,
+                value: link.value,
+            })),
+        };
+
+        this.setState({data: data});
     };
 
-    return (
-      <Container fluid className='h-100'>
-        <Row className='h-100'>
-          <Sidebar onInput={this.inputEvent} />
+    renderSankey(): JSX.Element | null {
+        if (this.state.data.nodes.length > 0) {
+            return (
+                <Sankey width={600} height={600} data={this.state.data} />
+            );
+        }
+        return null;
+    }
 
-          <Col fluid className="p-5">
-            <h1 className="header">
-              Welcome To React-Bootstrap TypeScript Example
-            </h1>
-            <Sankey width={600} height={600} data={data} />
-          </Col>
-        </Row>
-      </Container>
-    );
-  }
+  render() {
+        return (
+        <Container fluid className='h-100'>
+            <Row className='h-100'>
+            <Sidebar onInput={this.inputEvent} />
+
+            <Col fluid className="p-5">
+                { this.renderSankey() }
+            </Col>
+            </Row>
+        </Container>
+        );
+    }
 }
 
 export default App;
