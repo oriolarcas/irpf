@@ -5,7 +5,7 @@ import chroma from "chroma-js";
 import React from 'react';
 
 interface SankeyNodeProps {
-    name: string | undefined;
+    title?: string | undefined;
     x0?: number | undefined;
     x1?: number | undefined;
     y0?: number | undefined;
@@ -13,7 +13,7 @@ interface SankeyNodeProps {
     color: string;
 }
 
-const SankeyNode = ({name, x0, x1, y0, y1, color}: SankeyNodeProps): JSX.Element => {
+const SankeyNode = ({title, x0, x1, y0, y1, color}: SankeyNodeProps): JSX.Element => {
     let width: number | undefined = undefined;
     let height: number | undefined = undefined;
     if (x0 !== undefined && x1 !== undefined) {
@@ -24,7 +24,7 @@ const SankeyNode = ({name, x0, x1, y0, y1, color}: SankeyNodeProps): JSX.Element
     }
     return (
         <rect x={x0} y={y0} width={width} height={height} fill={color}>
-            <title>{name}</title>
+            <title>{title}</title>
         </rect>
     );
 }
@@ -84,6 +84,13 @@ interface SankeyProps {
     height: number;
 }
 
+function formatCurrency(value: number | undefined): string | undefined {
+    if (value === undefined) {
+        return undefined;
+    }
+    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(value);
+}
+
 export class Sankey extends React.Component<SankeyProps> {
     svgRef = React.createRef<SVGSVGElement>();
 
@@ -108,7 +115,7 @@ export class Sankey extends React.Component<SankeyProps> {
                         <SankeyNode
                             {...node}
                             color={color(colorScale(i)).hex()}
-                            name={nodeObj["name"]}
+                            title={formatCurrency(node.value)}
                         />
                     )})}
                     {links.map((link, i) => {
