@@ -101,7 +101,7 @@ export class Sankey extends React.Component<SankeyProps> {
 
         return (
             <svg width="100%" height="600" ref={this.svgRef}>
-                <g style={{ mixBlendMode: "multiply" }}>
+                <g style={{ mixBlendMode: "multiply" }} stroke="currentcolor">
                     {nodes.map((node, i) => {
                         let nodeObj: any = node;
                         return (
