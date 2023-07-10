@@ -50,6 +50,25 @@ function SankeyLink({link, color}: SankeyLinkProps) {
     );
 }
 
+interface SankeyLabelProps {
+    name: string | undefined;
+    x0?: number | undefined;
+    x1?: number | undefined;
+    y0?: number | undefined;
+    y1?: number | undefined;
+}
+
+const SankeyLabel = ({name, x0, x1, y0, y1}: SankeyLabelProps): JSX.Element => {
+    const labelPadding = 6;
+    const x = x1 !== undefined ? x1 + labelPadding : undefined;
+    const y = y0 !== undefined && y1 !== undefined ? (y0 + y1) / 2 : undefined;
+    return (
+        <text x={x} y={y} dy={"0.35em"}>
+            {name}
+        </text>
+    );
+}
+
 interface SankeyProps {
     data: any;
     width: number;
@@ -74,7 +93,6 @@ class Sankey extends React.Component<SankeyProps> {
             <svg width="100%" height="600" ref={this.svgRef}>
                 <g style={{ mixBlendMode: "multiply" }}>
                     {nodes.map((node, i) => {
-                        console.log(node);
                         let nodeObj: any = node;
                         return (
                         <SankeyNode
@@ -86,7 +104,7 @@ class Sankey extends React.Component<SankeyProps> {
                     {links.map((link, i) => {
                         let linkColor: string | undefined = undefined;
                         if (typeof link.source == "object") {
-                            if (link.source.index) {
+                            if (link.source.index !== undefined) {
                                 linkColor = color(colorScale(link.source.index)).hex();
                             }
                         }
@@ -97,6 +115,13 @@ class Sankey extends React.Component<SankeyProps> {
                             />
                         );
                     })}
+                </g>
+                <g fontFamily="sans-serif" fontSize={10}>
+                    {nodes.map((node) => {
+                        let nodeObj: any = node;
+                        return (
+                        <SankeyLabel {...node} name={nodeObj["name"]} />
+                    )})}
                 </g>
             </svg>
         );
