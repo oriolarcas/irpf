@@ -1,6 +1,7 @@
 import { IrpfParameters, CategoriaProfessional, ComunitatAutònoma, GrauDiscapacitat, Dependent } from './Irpf';
 
 import React from 'react';
+import { useEffect } from 'react';
 
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
@@ -36,22 +37,22 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         ['K', CategoriaProfessional.TreballadorsMenors18Anys],
     ]);
 
-    SelectToComunitatAutònoma = new Map<string, ComunitatAutònoma>([
-        ['1', ComunitatAutònoma.Andalusia],
-        ['2', ComunitatAutònoma.Aragó],
-        ['3', ComunitatAutònoma.Astúries],
-        ['4', ComunitatAutònoma.Balears],
-        ['5', ComunitatAutònoma.Canaries],
-        ['6', ComunitatAutònoma.Cantàbria],
-        ['7', ComunitatAutònoma.CastellaILleó],
-        ['8', ComunitatAutònoma.CastellaLaManxa],
-        ['9', ComunitatAutònoma.Catalunya],
-        ['10', ComunitatAutònoma.Extremadura],
-        ['11', ComunitatAutònoma.Galícia],
-        ['12', ComunitatAutònoma.LaRioja],
-        ['13', ComunitatAutònoma.Madrid],
-        ['14', ComunitatAutònoma.Múrcia],
-        ['15', ComunitatAutònoma.PaísValencià],
+    SelectToComunitatAutònoma = new Map<string, {comunitatAutònoma: ComunitatAutònoma, name: string}>([
+        ['1', {comunitatAutònoma: ComunitatAutònoma.Andalusia, name: "Andalusia"}],
+        ['2', {comunitatAutònoma: ComunitatAutònoma.Aragó, name: "Aragó"}],
+        ['3', {comunitatAutònoma: ComunitatAutònoma.Astúries, name: "Astúries"}],
+        ['4', {comunitatAutònoma: ComunitatAutònoma.Balears, name: "Balears"}],
+        ['5', {comunitatAutònoma: ComunitatAutònoma.Canaries, name: "Canaries"}],
+        ['6', {comunitatAutònoma: ComunitatAutònoma.Cantàbria, name: "Cantàbria"}],
+        ['7', {comunitatAutònoma: ComunitatAutònoma.CastellaILleó, name: "Castella i Lleó"}],
+        ['8', {comunitatAutònoma: ComunitatAutònoma.CastellaLaManxa, name: "Castella - la Manxa"}],
+        ['9', {comunitatAutònoma: ComunitatAutònoma.Catalunya, name: "Catalunya"}],
+        ['10', {comunitatAutònoma: ComunitatAutònoma.Extremadura, name: "Extremadura"}],
+        ['11', {comunitatAutònoma: ComunitatAutònoma.Galícia, name: "Galícia"}],
+        ['12', {comunitatAutònoma: ComunitatAutònoma.LaRioja, name: "La Rioja"}],
+        ['13', {comunitatAutònoma: ComunitatAutònoma.Madrid, name: "Madrid"}],
+        ['14', {comunitatAutònoma: ComunitatAutònoma.Múrcia, name: "Múrcia"}],
+        ['15', {comunitatAutònoma: ComunitatAutònoma.PaísValencià, name: "País Valencià"}],
     ]);
 
     constructor(props: any) {
@@ -63,8 +64,10 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
             this.FormTextRefs.set(field, React.createRef());
         }
         // Default values
+        values.set(IrpfFormFields.SalariBrut, "28000"); // https://www.idescat.cat/indicadors/?id=anuals&n=10400
+        values.set(IrpfFormFields.Edat, "42"); // https://www.idescat.cat/treball/epa?tc=4&id=xc1152&dt=2022&dt=2022
         values.set(IrpfFormFields.CategoriaProfessional, this.SelectToCategoriaProfessional.keys().next().value);
-        values.set(IrpfFormFields.ComunitatAutònoma, this.SelectToComunitatAutònoma.keys().next().value);
+        values.set(IrpfFormFields.ComunitatAutònoma, Array.from(this.SelectToComunitatAutònoma.entries()).filter(([value, props]) => (props.comunitatAutònoma == ComunitatAutònoma.Catalunya))[0][0]);
         values.set(IrpfFormFields.MovilitatGeogràfica, false);
 
         this.setState({values});
@@ -88,16 +91,19 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                 break;
         }
         this.setState({values});
+        this.onInput();
     }
 
-    onInput = (event: any) => {
-        event.preventDefault();
+    onInput = (event?: any) => {
+        if (event !== undefined) {
+            event.preventDefault();
+        }
 
         const values = this.state.values;
         const salariBrut = parseInt(values.get(IrpfFormFields.SalariBrut));
         const edat = parseInt(values.get(IrpfFormFields.Edat));
         const categoriaProfessional = this.SelectToCategoriaProfessional.get(values.get(IrpfFormFields.CategoriaProfessional));
-        const comunitatAutònoma = this.SelectToComunitatAutònoma.get(values.get(IrpfFormFields.ComunitatAutònoma));
+        const comunitatAutònoma = this.SelectToComunitatAutònoma.get(values.get(IrpfFormFields.ComunitatAutònoma))?.comunitatAutònoma;
         const movilitatGeogràfica = values.get(IrpfFormFields.MovilitatGeogràfica);
 
         if (Number.isNaN(salariBrut)) {
@@ -150,6 +156,10 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         console.error(msg);
     }
 
+    componentDidMount(): void {
+        this.onInput();
+    }
+
     render() {
         return (
             <Col md={3} xl={2} className='sidebar col-auto px-sm-2 px-0 bg-dark'>
@@ -165,7 +175,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <CurrencyEuro size={20} color='white' />
                                 Salari brut anual
                             </Form.Label>
-                            <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChange} />
+                            <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.SalariBrut)} />
                             <Form.Text id="passwordHelpBlock" className='text-warning d-none' >
                                 El teu salari brut anual en €. Un número positiu, sense punts, comes, espais o altres símbols.
                             </Form.Text>
@@ -175,7 +185,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <Person size={20} color='white' />
                                 Edat
                             </Form.Label>
-                            <Form.Control id={IrpfFormFields.Edat} onChange={this.onChange} />
+                            <Form.Control id={IrpfFormFields.Edat} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.Edat)} />
                         </li>
                         <li className="nav-item">
                             <Form.Label htmlFor={IrpfFormFields.CategoriaProfessional}>
@@ -202,21 +212,15 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 Comunitat autònoma
                             </Form.Label>
                             <Form.Select id={IrpfFormFields.ComunitatAutònoma} aria-label="Comunitat Autònoma" onChange={this.onChange}>
-                                <option value='1'>Andalusia</option>
-                                <option value='2'>Aragó</option>
-                                <option value='3'>Astúries</option>
-                                <option value='4'>Balears</option>
-                                <option value='5'>Canaries</option>
-                                <option value='6'>Cantàbria</option>
-                                <option value='7'>Castella i Lleó</option>
-                                <option value='8'>Castella - la Manxa</option>
-                                <option value='9'>Catalunya</option>
-                                <option value='10'>Extremadura</option>
-                                <option value='11'>Galícia</option>
-                                <option value='12'>La Rioja</option>
-                                <option value='13'>Madrid</option>
-                                <option value='14'>Múrcia</option>
-                                <option value='15'>País Valencià</option>
+                                {
+                                    Array.from(this.SelectToComunitatAutònoma.entries()).map((value) => {
+                                        return <option
+                                            value={value[0]}
+                                            selected={this.state.values.get(IrpfFormFields.ComunitatAutònoma) == value[0] ? true : undefined}>
+                                                {value[1].name}
+                                            </option>
+                                    })
+                                }
                             </Form.Select>
                             <Form.Check type='checkbox' id={IrpfFormFields.MovilitatGeogràfica} label='Movilitat geogràfica' className='mt-2' onChange={this.onChange} />
                         </li>

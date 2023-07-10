@@ -209,7 +209,7 @@ class App extends React.Component {
             })),
         };
 
-        this.setState({data: data});
+        this.setState({data});
     };
 
     renderSankey(): JSX.Element | null {
