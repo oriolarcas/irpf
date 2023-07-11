@@ -163,7 +163,11 @@ export function calculateIrpf({
     const dadesEstatals = getDadesComunitatAutònoma(ComunitatAutònoma.Espanya);
     const dadesAutonòmiques = getDadesComunitatAutònoma(comunitatAutònoma);
 
+    console.log("Salari brut: " + formatCurrency(salariBrut));
+
     const RendimentDelTreball = salariBrut; // + altres rendiments del treball personal
+    console.log("Rendiments del treball: " + formatCurrency(RendimentDelTreball));
+
     const salariBrutMensual = salariBrut / 12;
 
     // Seguretat Social
@@ -177,6 +181,9 @@ export function calculateIrpf({
     const RendimentNetDelTreball = Math.max(RendimentDelTreball - SumaDespesesDeduïbles, 0);
     const BaseImposable = RendimentNetDelTreball; // + rendiment net de l'estalvi
     const BaseLiquidable = BaseImposable; // - reduccions (declaració conjunta, etc.)
+
+    console.log("Base imposable: " + formatCurrency(BaseImposable));
+    console.log("Base liquidable: " + formatCurrency(BaseLiquidable));
 
     // Quota íntegra estatal
     // https://sede.agenciatributaria.gob.es/Sede/ca_es/ayuda/manuales-videos-folletos/manuales-ayuda-presentacion/irpf-2022/8-cumplimentacion-irpf/8_4-cuota-integra/8_4_3-gravamen-base-liquidable-general/8_4_3_1-cuota-integra-estatal.html
@@ -204,7 +211,10 @@ export function calculateIrpf({
     console.log("Quota íntegra: " + formatCurrency(QuotaÍntegra));
 
     const TipusRetenció = QuotaÍntegra / salariBrut;
-    const SalariNet = RendimentNetDelTreball - QuotaÍntegra;
+    const SalariNet = RendimentDelTreball - CotitzacióSSAnual - QuotaÍntegra;
+
+    console.log("Tipus de retenció: " + formatCurrency(TipusRetenció));
+    console.log("Salari net: " + formatCurrency(SalariNet));
 
     return {
         valid: true,

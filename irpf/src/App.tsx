@@ -15,6 +15,7 @@ enum IrpfNodes {
     DeduccióMovilitatGeogràfica,
     DeduccióDiscapacitatContribuent,
     DespesesDeduïbles,
+    Deduccions,
     BaseImposable,
     BaseLiquidable,
     QuotaEstatal,
@@ -39,6 +40,8 @@ function getIrpfNodeName(node: IrpfNodes): string {
             return "Discapacitat";
         case IrpfNodes.DespesesDeduïbles:
             return "Despeses deduïbles";
+        case IrpfNodes.Deduccions:
+            return "";
         case IrpfNodes.BaseImposable:
             return "Base imposable";
         case IrpfNodes.BaseLiquidable:
@@ -79,57 +82,70 @@ class App extends React.Component {
             value: irpf.baseImposable,
         });
 
+        const SumaDespesesDeduïbles = Object.values(irpf.despesesDeduïbles).reduce((sum, value) => (sum + value));
+
         links.push({
             source: IrpfNodes.RendimentsDelTreball,
+            target: IrpfNodes.DespesesDeduïbles,
+            value: SumaDespesesDeduïbles,
+        });
+
+        links.push({
+            source: IrpfNodes.DespesesDeduïbles,
             target: IrpfNodes.DeduccióRendimentsTreball,
             value: irpf.despesesDeduïbles.rendimentsDelTreball,
         });
 
         links.push({
-            source: IrpfNodes.DeduccióRendimentsTreball,
-            target: IrpfNodes.DespesesDeduïbles,
-            value: irpf.despesesDeduïbles.rendimentsDelTreball,
-        });
-
-        links.push({
-            source: IrpfNodes.RendimentsDelTreball,
+            source: IrpfNodes.DespesesDeduïbles,
             target: IrpfNodes.DeduccióCotitzacióSS,
             value: irpf.despesesDeduïbles.cotitzacióSS,
         });
 
         links.push({
-            source: IrpfNodes.DeduccióCotitzacióSS,
-            target: IrpfNodes.DespesesDeduïbles,
-            value: irpf.despesesDeduïbles.cotitzacióSS,
+            source: IrpfNodes.DeduccióRendimentsTreball,
+            target: IrpfNodes.Deduccions,
+            value: irpf.despesesDeduïbles.rendimentsDelTreball,
         });
 
         if (irpf.despesesDeduïbles.movilitatGeogràfica) {
             links.push({
-                source: IrpfNodes.RendimentsDelTreball,
+                source: IrpfNodes.DespesesDeduïbles,
                 target: IrpfNodes.DeduccióMovilitatGeogràfica,
                 value: irpf.despesesDeduïbles.movilitatGeogràfica,
             });
 
             links.push({
                 source: IrpfNodes.DeduccióMovilitatGeogràfica,
-                target: IrpfNodes.DespesesDeduïbles,
+                target: IrpfNodes.Deduccions,
                 value: irpf.despesesDeduïbles.movilitatGeogràfica,
             });
         }
 
         if (irpf.despesesDeduïbles.discapacitatContribuent) {
             links.push({
-                source: IrpfNodes.RendimentsDelTreball,
+                source: IrpfNodes.DespesesDeduïbles,
                 target: IrpfNodes.DeduccióDiscapacitatContribuent,
                 value: irpf.despesesDeduïbles.discapacitatContribuent,
             });
 
             links.push({
                 source: IrpfNodes.DeduccióDiscapacitatContribuent,
-                target: IrpfNodes.DespesesDeduïbles,
+                target: IrpfNodes.Deduccions,
                 value: irpf.despesesDeduïbles.discapacitatContribuent,
             });
         }
+
+        const QuotaEstatalÍntegra = irpf.quotaEstatal - irpf.mínimPersonalEstatal;
+        const QuotaAutonòmicaÍntegra = irpf.quotaAutonòmica - irpf.mínimPersonalAutonòmic;
+        const Retencions = QuotaEstatalÍntegra + QuotaAutonòmicaÍntegra;
+        const BaseLiquidableNeta = irpf.baseLiquidable - Retencions;
+
+        links.push({
+            source: IrpfNodes.Deduccions,
+            target: IrpfNodes.SalariNet,
+            value: Math.min(SumaDespesesDeduïbles - irpf.despesesDeduïbles.cotitzacióSS, irpf.salariNet - BaseLiquidableNeta),
+        });
 
         links.push({
             source: IrpfNodes.BaseImposable,
@@ -137,8 +153,11 @@ class App extends React.Component {
             value: irpf.baseLiquidable,
         });
 
-        const QuotaEstatalÍntegra = irpf.quotaEstatal - irpf.mínimPersonalEstatal;
-        const QuotaAutonòmicaÍntegra = irpf.quotaAutonòmica - irpf.mínimPersonalAutonòmic;
+        links.push({
+            source: IrpfNodes.BaseLiquidable,
+            target: IrpfNodes.SalariNet,
+            value: BaseLiquidableNeta,
+        });
 
         links.push({
             source: IrpfNodes.BaseLiquidable,
@@ -174,12 +193,6 @@ class App extends React.Component {
             source: IrpfNodes.QuotaAutonòmica,
             target: IrpfNodes.QuotaAutonòmicaMínimPersonal,
             value: irpf.mínimPersonalAutonòmic,
-        });
-
-        links.push({
-            source: IrpfNodes.BaseLiquidable,
-            target: IrpfNodes.SalariNet,
-            value: irpf.salariNet,
         });
 
         // Generate final data object
