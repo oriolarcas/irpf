@@ -1,7 +1,6 @@
 import { IrpfParameters, CategoriaProfessional, ComunitatAutònoma, GrauDiscapacitat, Dependent } from './Irpf';
 
 import React from 'react';
-import { useEffect } from 'react';
 
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
@@ -67,7 +66,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         values.set(IrpfFormFields.SalariBrut, "28000"); // https://www.idescat.cat/indicadors/?id=anuals&n=10400
         values.set(IrpfFormFields.Edat, "42"); // https://www.idescat.cat/treball/epa?tc=4&id=xc1152&dt=2022&dt=2022
         values.set(IrpfFormFields.CategoriaProfessional, this.SelectToCategoriaProfessional.keys().next().value);
-        values.set(IrpfFormFields.ComunitatAutònoma, Array.from(this.SelectToComunitatAutònoma.entries()).filter(([value, props]) => (props.comunitatAutònoma == ComunitatAutònoma.Catalunya))[0][0]);
+        values.set(IrpfFormFields.ComunitatAutònoma, Array.from(this.SelectToComunitatAutònoma.entries()).filter(([value, props]) => (props.comunitatAutònoma === ComunitatAutònoma.Catalunya))[0][0]);
         values.set(IrpfFormFields.MovilitatGeogràfica, false);
 
         this.setState({values});
@@ -163,10 +162,10 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
     render() {
         return (
             <Col md={3} xl={2} className='sidebar col-auto px-sm-2 px-0 bg-dark'>
-                <a href="#" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <div className="d-flex align-items-center m-3 mb-md-0 me-md-auto text-white text-decoration-none">
                     <CalculatorFill className="bi me-2" size={40} />
                     <span className="fs-4">IRPF</span>
-                </a>
+                </div>
                 <hr />
                 <Form onSubmit={this.onInput}>
                     <ul className="nav nav-pills flex-column mb-auto">
@@ -216,7 +215,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                     Array.from(this.SelectToComunitatAutònoma.entries()).map((value) => {
                                         return <option
                                             value={value[0]}
-                                            selected={this.state.values.get(IrpfFormFields.ComunitatAutònoma) == value[0] ? true : undefined}>
+                                            selected={this.state.values.get(IrpfFormFields.ComunitatAutònoma) === value[0] ? true : undefined}>
                                                 {value[1].name}
                                             </option>
                                     })

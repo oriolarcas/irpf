@@ -47,6 +47,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/chroma-js": "^2.4.0",
     "@types/d3": "^7.4.0",
     "@types/d3-sankey": "^0.12.1"
