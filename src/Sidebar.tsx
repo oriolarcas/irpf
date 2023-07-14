@@ -88,11 +88,16 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         this.setState(is_error);
     }
 
-    onChange = (event: any) => {
+    onChangeText = (event: any) => {
+        this.onChange(event, false);
+    }
+
+    onChangeControl = (event: any) => {
+        this.onChange(event, true);
+    }
+
+    onChange(event: any, immediate: boolean) {
         const element = event.target;
-
-        console.log(element);
-
         let values = this.state.values;
         switch (element.id) {
             case IrpfFormFields.SalariBrut:
@@ -107,8 +112,12 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         }
         this.setState({values});
 
-        clearTimeout(this.changeTimer);
-        this.changeTimer = setTimeout(this.onInput, 500);
+        if (immediate) {
+            this.onInput();
+        } else {
+            clearTimeout(this.changeTimer);
+            this.changeTimer = setTimeout(this.onInput, 500);
+        }
     }
 
     onInput = (event?: any) => {
@@ -185,7 +194,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <CurrencyEuro className='me-1' size={20} color='white' />
                                 Salari brut anual
                             </Form.Label>
-                            <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.SalariBrut)} />
+                            <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChangeText} value={this.state.values.get(IrpfFormFields.SalariBrut)} />
                             {this.state.is_error.get(IrpfFormFields.SalariBrut) === true &&
                                 <Form.Text className='help text-warning'>
                                     Valor invàlid. Introdueix un salari brut anual en €, major que el SMI de {formatCurrency(SmiAnual)}, sense punts, comes, espais o altres símbols.
@@ -197,7 +206,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <Person className='me-1' size={20} color='white' />
                                 Edat
                             </Form.Label>
-                            <Form.Control id={IrpfFormFields.Edat} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.Edat)} />
+                            <Form.Control id={IrpfFormFields.Edat} onChange={this.onChangeText} value={this.state.values.get(IrpfFormFields.Edat)} />
                             {this.state.is_error.get(IrpfFormFields.Edat) === true &&
                                 <Form.Text className='help text-warning'>
                                     Valor invàlid. Introdueix la teva edat, en anys.
@@ -209,7 +218,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <Tools className='me-1' size={20} color='white' />
                                 Categoria professional
                             </Form.Label>
-                            <Form.Select id={IrpfFormFields.CategoriaProfessional} aria-label="Categoria professional" onChange={this.onChange}>
+                            <Form.Select id={IrpfFormFields.CategoriaProfessional} aria-label="Categoria professional" onChange={this.onChangeControl}>
                                 {
                                     Array.from(this.SelectToCategoriaProfessional.entries()).map((value) => {
                                         return <option value={value[0]}>
@@ -224,7 +233,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                 <GeoAltFill className='me-1' size={20} color='white' />
                                 Comunitat autònoma
                             </Form.Label>
-                            <Form.Select id={IrpfFormFields.ComunitatAutònoma} aria-label="Comunitat Autònoma" onChange={this.onChange}>
+                            <Form.Select id={IrpfFormFields.ComunitatAutònoma} aria-label="Comunitat Autònoma" onChange={this.onChangeControl}>
                                 {
                                     Array.from(this.SelectToComunitatAutònoma.entries()).map((value) => {
                                         return <option
@@ -235,7 +244,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                                     })
                                 }
                             </Form.Select>
-                            <Form.Check type='checkbox' id={IrpfFormFields.MovilitatGeogràfica} label='Movilitat geogràfica' className='mt-2' onChange={this.onChange} />
+                            <Form.Check type='checkbox' id={IrpfFormFields.MovilitatGeogràfica} label='Movilitat geogràfica' className='mt-2' onChange={this.onChangeControl} />
                         </li>
                         <li className="nav-item">
                             <Button type='submit' variant="primary" className='w-100 mt-3'>Calcula</Button>
