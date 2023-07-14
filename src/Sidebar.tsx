@@ -188,7 +188,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                             <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.SalariBrut)} />
                             {this.state.is_error.get(IrpfFormFields.SalariBrut) === true &&
                                 <Form.Text className='help text-warning'>
-                                    El teu salari brut anual en €. Un número positiu, major que el SMI de {formatCurrency(SmiAnual)}, sense punts, comes, espais o altres símbols.
+                                    Valor invàlid. Introdueix un salari brut anual en €, major que el SMI de {formatCurrency(SmiAnual)}, sense punts, comes, espais o altres símbols.
                                 </Form.Text>
                             }
                         </li>
@@ -200,7 +200,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                             <Form.Control id={IrpfFormFields.Edat} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.Edat)} />
                             {this.state.is_error.get(IrpfFormFields.Edat) === true &&
                                 <Form.Text className='help text-warning'>
-                                    La teva edat en anys.
+                                    Valor invàlid. Introdueix la teva edat, en anys.
                                 </Form.Text>
                             }
                         </li>
