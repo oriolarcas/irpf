@@ -1,4 +1,5 @@
 import { ComunitatAutònoma, getDadesComunitatAutònoma, Dependent, GrauDiscapacitat, DadesComunitatAutònoma } from "./Dades";
+import { formatCurrency } from "./Currency";
 
 export { ComunitatAutònoma, GrauDiscapacitat } from "./Dades";
 export type { Dependent } from "./Dades";
@@ -49,6 +50,8 @@ export interface IrpfResult {
     tipusRetenció: number;
     salariNet: number;
 }
+
+export const SmiAnual = 15120;
 
 function límitsCotitzacióPerCategoriaProfessional(categoriaProfessional: CategoriaProfessional): [min: number, max: number] {
     switch (categoriaProfessional) {
@@ -144,10 +147,6 @@ function getDespesesDeduïbles(
         movilitatGeogràfica: ReduccióRendimentMovilitatGeogràfica,
         discapacitatContribuent: getReduccióRendimentDiscapacitat(contribuent),
     };
-}
-
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(value);
 }
 
 export function calculateIrpf({

@@ -1,3 +1,5 @@
+import { formatCurrency } from "./Currency";
+
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal } from "d3-sankey";
 import chroma from "chroma-js";
@@ -82,13 +84,6 @@ interface SankeyProps {
     data: SankeyData;
     width: number;
     height: number;
-}
-
-function formatCurrency(value: number | undefined): string | undefined {
-    if (value === undefined) {
-        return undefined;
-    }
-    return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(value);
 }
 
 export class Sankey extends React.Component<SankeyProps> {

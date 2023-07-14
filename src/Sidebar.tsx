@@ -1,4 +1,12 @@
-import { IrpfParameters, CategoriaProfessional, ComunitatAutònoma, GrauDiscapacitat, Dependent } from './Irpf';
+import {
+    IrpfParameters,
+    CategoriaProfessional,
+    ComunitatAutònoma,
+    GrauDiscapacitat,
+    Dependent,
+    SmiAnual,
+} from './Irpf';
+import { formatCurrency } from './Currency';
 
 import React from 'react';
 
@@ -18,23 +26,23 @@ enum IrpfFormFields {
 
 class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => void}> {
     state = {
-        values: new Map<string, any>()
+        values: new Map<string, any>(),
+        is_error: new Map<string, boolean>()
     };
     changeTimer: ReturnType<typeof setTimeout> | undefined = undefined;
-    FormTextRefs = new Map<string, any>();
 
-    SelectToCategoriaProfessional = new Map<string, CategoriaProfessional>([
-        ['A', CategoriaProfessional.EnginyersILlicenciats],
-        ['B', CategoriaProfessional.EnginyersTecnicsPèritsIAjudantsTitulats],
-        ['C', CategoriaProfessional.CapsAdministratiusIDeTaller],
-        ['D', CategoriaProfessional.AjudantsNoTitulats],
-        ['E', CategoriaProfessional.OficialsAdministratius],
-        ['F', CategoriaProfessional.Subalterns],
-        ['G', CategoriaProfessional.AuxiliarsAdministratius],
-        ['H', CategoriaProfessional.OficialsDePrimeraISegona],
-        ['I', CategoriaProfessional.OficialsDeTerceraIEspecialistes],
-        ['J', CategoriaProfessional.Peons],
-        ['K', CategoriaProfessional.TreballadorsMenors18Anys],
+    SelectToCategoriaProfessional = new Map<string, {categoriaProfessional: CategoriaProfessional, name: string}>([
+        ['A', {categoriaProfessional: CategoriaProfessional.EnginyersILlicenciats, name: "Enginyers i llicenciats"}],
+        ['B', {categoriaProfessional: CategoriaProfessional.EnginyersTecnicsPèritsIAjudantsTitulats, name: "Enginyers tècnics, pèrits i ajudants titulats"}],
+        ['C', {categoriaProfessional: CategoriaProfessional.CapsAdministratiusIDeTaller, name: "Caps administratius i de taller"}],
+        ['D', {categoriaProfessional: CategoriaProfessional.AjudantsNoTitulats, name: "Ajudants no titulats"}],
+        ['E', {categoriaProfessional: CategoriaProfessional.OficialsAdministratius, name: "Oficials administratius"}],
+        ['F', {categoriaProfessional: CategoriaProfessional.Subalterns, name: "Subalterns"}],
+        ['G', {categoriaProfessional: CategoriaProfessional.AuxiliarsAdministratius, name: "Auxiliars administratius"}],
+        ['H', {categoriaProfessional: CategoriaProfessional.OficialsDePrimeraISegona, name: "Oficials de primera i segona"}],
+        ['I', {categoriaProfessional: CategoriaProfessional.OficialsDeTerceraIEspecialistes, name: "Oficials de tercera i especialistes"}],
+        ['J', {categoriaProfessional: CategoriaProfessional.Peons, name: "Peons"}],
+        ['K', {categoriaProfessional: CategoriaProfessional.TreballadorsMenors18Anys, name: "Qualsevol treballador menor de 18 anys"}],
     ]);
 
     SelectToComunitatAutònoma = new Map<string, {comunitatAutònoma: ComunitatAutònoma, name: string}>([
@@ -59,9 +67,10 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         super(props);
 
         let values = this.state.values;
+        let is_error = this.state.is_error;
         for (const field in IrpfFormFields) {
             values.set(field, "");
-            this.FormTextRefs.set(field, React.createRef());
+            is_error.set(field, false);
         }
         // Default values
         values.set(IrpfFormFields.SalariBrut, "28000"); // https://www.idescat.cat/indicadors/?id=anuals&n=10400
@@ -70,7 +79,13 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         values.set(IrpfFormFields.ComunitatAutònoma, Array.from(this.SelectToComunitatAutònoma.entries()).filter(([value, props]) => (props.comunitatAutònoma === ComunitatAutònoma.Catalunya))[0][0]);
         values.set(IrpfFormFields.MovilitatGeogràfica, false);
 
-        this.setState({values});
+        this.setState({values, is_error});
+    }
+
+    setError(field: IrpfFormFields, error: boolean) {
+        let is_error = this.state.is_error;
+        is_error.set(field, error);
+        this.setState(is_error);
     }
 
     onChange = (event: any) => {
@@ -101,30 +116,28 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
             event.preventDefault();
         }
 
+        const parsePositiveInt = (num: string) => {
+            num = num.trim();
+            if (!/^\+?(0|[1-9]\d*)$/.test(num)) {
+                return NaN;
+            }
+            return parseInt(num, 10);
+        }
+
         const values = this.state.values;
-        const salariBrut = parseInt(values.get(IrpfFormFields.SalariBrut));
-        const edat = parseInt(values.get(IrpfFormFields.Edat));
-        const categoriaProfessional = this.SelectToCategoriaProfessional.get(values.get(IrpfFormFields.CategoriaProfessional));
-        const comunitatAutònoma = this.SelectToComunitatAutònoma.get(values.get(IrpfFormFields.ComunitatAutònoma))?.comunitatAutònoma;
+        const salariBrut = parsePositiveInt(values.get(IrpfFormFields.SalariBrut));
+        const edat = parsePositiveInt(values.get(IrpfFormFields.Edat));
+        const categoriaProfessional = this.SelectToCategoriaProfessional.get(values.get(IrpfFormFields.CategoriaProfessional))?.categoriaProfessional ?? CategoriaProfessional.EnginyersILlicenciats;
+        const comunitatAutònoma = this.SelectToComunitatAutònoma.get(values.get(IrpfFormFields.ComunitatAutònoma))?.comunitatAutònoma ?? ComunitatAutònoma.Andalusia;
         const movilitatGeogràfica = values.get(IrpfFormFields.MovilitatGeogràfica);
 
-        if (Number.isNaN(salariBrut)) {
-            this.error('Salari brut invàlid');
-            return;
-        }
+        this.setError(IrpfFormFields.SalariBrut, Number.isNaN(salariBrut) || salariBrut < SmiAnual);
+        this.setError(IrpfFormFields.Edat, Number.isNaN(edat));
+        this.setError(IrpfFormFields.CategoriaProfessional, categoriaProfessional === undefined);
+        this.setError(IrpfFormFields.ComunitatAutònoma, comunitatAutònoma === undefined);
 
-        if (Number.isNaN(edat)) {
-            this.error('Edat invàlida');
-            return;
-        }
-
-        if (categoriaProfessional === undefined) {
-            this.error('Categoria professional invàlida');
-            return;
-        }
-
-        if (comunitatAutònoma === undefined) {
-            this.error('Comunitat autònoma invàlida');
+        if (Array.from(this.state.is_error.values()).reduce((all, current) => all || current)) {
+            this.setState(this.state);
             return;
         }
 
@@ -154,10 +167,6 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
         }
     };
 
-    error(msg: string) {
-        console.error(msg);
-    }
-
     componentDidMount(): void {
         this.onInput();
     }
@@ -169,48 +178,50 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                     <CalculatorFill className="bi me-2" size={40} />
                     <span className="fs-4">IRPF</span>
                 </div>
-                <hr />
                 <Form onSubmit={this.onInput}>
                     <ul className="nav nav-pills flex-column mb-auto">
                         <li className="nav-item">
                             <Form.Label htmlFor={IrpfFormFields.SalariBrut}>
-                                <CurrencyEuro size={20} color='white' />
+                                <CurrencyEuro className='me-1' size={20} color='white' />
                                 Salari brut anual
                             </Form.Label>
                             <Form.Control id={IrpfFormFields.SalariBrut} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.SalariBrut)} />
-                            <Form.Text id="passwordHelpBlock" className='text-warning d-none' >
-                                El teu salari brut anual en €. Un número positiu, sense punts, comes, espais o altres símbols.
-                            </Form.Text>
+                            {this.state.is_error.get(IrpfFormFields.SalariBrut) === true &&
+                                <Form.Text className='help text-warning'>
+                                    El teu salari brut anual en €. Un número positiu, major que el SMI de {formatCurrency(SmiAnual)}, sense punts, comes, espais o altres símbols.
+                                </Form.Text>
+                            }
                         </li>
                         <li className="nav-item">
                             <Form.Label htmlFor={IrpfFormFields.Edat}>
-                                <Person size={20} color='white' />
+                                <Person className='me-1' size={20} color='white' />
                                 Edat
                             </Form.Label>
                             <Form.Control id={IrpfFormFields.Edat} onChange={this.onChange} value={this.state.values.get(IrpfFormFields.Edat)} />
+                            {this.state.is_error.get(IrpfFormFields.Edat) === true &&
+                                <Form.Text className='help text-warning'>
+                                    La teva edat en anys.
+                                </Form.Text>
+                            }
                         </li>
                         <li className="nav-item">
                             <Form.Label htmlFor={IrpfFormFields.CategoriaProfessional}>
-                                <Tools size={20} color='white' />
+                                <Tools className='me-1' size={20} color='white' />
                                 Categoria professional
                             </Form.Label>
                             <Form.Select id={IrpfFormFields.CategoriaProfessional} aria-label="Categoria professional" onChange={this.onChange}>
-                                <option value='A'>Enginyers i llicenciats</option>
-                                <option value='B'>Enginyers tècnics, pèrits i ajudants titulats</option>
-                                <option value='C'>Caps administratius i de taller</option>
-                                <option value='D'>Ajudants no titulats</option>
-                                <option value='E'>Oficials administratius</option>
-                                <option value='F'>Subalterns</option>
-                                <option value='G'>Auxiliars administratius</option>
-                                <option value='H'>Oficials de primera i segona</option>
-                                <option value='I'>Oficials de tercera i especialistes</option>
-                                <option value='J'>Peons</option>
-                                <option value='K'>Qualsevol treballador menor de 18 anys</option>
+                                {
+                                    Array.from(this.SelectToCategoriaProfessional.entries()).map((value) => {
+                                        return <option value={value[0]}>
+                                            {value[1].name}
+                                        </option>
+                                    })
+                                }
                             </Form.Select>
                         </li>
                         <li className="nav-item">
                             <Form.Label htmlFor={IrpfFormFields.ComunitatAutònoma}>
-                                <GeoAltFill size={20} color='white' />
+                                <GeoAltFill className='me-1' size={20} color='white' />
                                 Comunitat autònoma
                             </Form.Label>
                             <Form.Select id={IrpfFormFields.ComunitatAutònoma} aria-label="Comunitat Autònoma" onChange={this.onChange}>
