@@ -20,6 +20,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
     state = {
         values: new Map<string, any>()
     };
+    changeTimer: ReturnType<typeof setTimeout> | undefined = undefined;
     FormTextRefs = new Map<string, any>();
 
     SelectToCategoriaProfessional = new Map<string, CategoriaProfessional>([
@@ -90,7 +91,9 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
                 break;
         }
         this.setState({values});
-        this.onInput();
+
+        clearTimeout(this.changeTimer);
+        this.changeTimer = setTimeout(this.onInput, 500);
     }
 
     onInput = (event?: any) => {
@@ -127,7 +130,7 @@ class Sidebar extends React.Component<{onInput?: (params: IrpfParameters) => voi
 
         // TODO:
         const contribuent: Dependent = {
-            edat: 30,
+            edat: edat,
             discapacitat: GrauDiscapacitat.Cap,
             assistència: false,
         };
